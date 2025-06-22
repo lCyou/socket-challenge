@@ -38,7 +38,7 @@ const availableRooms = [
 availableRooms.forEach(room => {
   roomMessages[room.id] = [
     { 
-      id: 1, 
+      id: Date.now() + Math.random(), // より一意なIDを生成
       user: "システム", 
       content: `${room.name}ルームへようこそ！`, 
       timestamp: new Date().toISOString() 
@@ -55,13 +55,16 @@ io.on("connection", (socket) => {
 
   // ルームに参加
   socket.on("room:join", (roomId) => {
+    console.log(`ユーザー ${socket.id} がルーム ${roomId} への参加を要求`);
+    
     // 既存のルームから退出
     const rooms = Array.from(socket.rooms);
     rooms.forEach(room => {
       if (room !== socket.id && roomUsers[room] !== undefined) {
         socket.leave(room);
-        roomUsers[room]--;
-        socket.to(room).emit("users:count", { room, count: roomUsers[room] });
+        roomUsers[room] = Math.max(0, roomUsers[room] - 1); // 負の数にならないように
+        io.to(room).emit("users:count", { room, count: roomUsers[room] });
+        console.log(`ユーザー ${socket.id} がルーム ${room} から退出`);
       }
     });
 
@@ -70,13 +73,23 @@ io.on("connection", (socket) => {
       socket.join(roomId);
       roomUsers[roomId]++;
       
+      console.log(`ルーム ${roomId} の既存メッセージ数: ${roomMessages[roomId].length}`);
+      
       // 新しいクライアントに既存のメッセージを送信
-      socket.emit("messages:initial", { room: roomId, messages: roomMessages[roomId] });
+      socket.emit("messages:initial", { 
+        room: roomId, 
+        messages: roomMessages[roomId] 
+      });
       
       // ルーム内の全クライアントに接続者数を通知
-      io.to(roomId).emit("users:count", { room: roomId, count: roomUsers[roomId] });
+      io.to(roomId).emit("users:count", { 
+        room: roomId, 
+        count: roomUsers[roomId] 
+      });
       
-      console.log(`ユーザー ${socket.id} がルーム ${roomId} に参加しました`);
+      console.log(`ユーザー ${socket.id} がルーム ${roomId} に参加しました (現在 ${roomUsers[roomId]} 人)`);
+    } else {
+      console.log(`エラー: 存在しないルーム ${roomId} への参加要求`);
     }
   });
 
@@ -84,10 +97,15 @@ io.on("connection", (socket) => {
   socket.on("message:send", (data) => {
     const { roomId, user, content } = data;
     
-    if (!roomMessages[roomId]) return;
+    console.log(`メッセージ受信: ルーム ${roomId}, ユーザー ${user}, 内容: ${content}`);
+    
+    if (!roomMessages[roomId]) {
+      console.log(`エラー: 存在しないルーム ${roomId} へのメッセージ送信`);
+      return;
+    }
     
     const newMessage = {
-      id: Date.now(),
+      id: Date.now() + Math.random(), // より一意なIDを生成
       user: user || "匿名",
       content: content,
       timestamp: new Date().toISOString()
@@ -102,38 +120,54 @@ io.on("connection", (socket) => {
     }
     
     // ルーム内の全クライアントに新しいメッセージを送信
-    io.to(roomId).emit("message:new", { room: roomId, message: newMessage });
+    io.to(roomId).emit("message:new", { 
+      room: roomId, 
+      message: newMessage 
+    });
     
-    console.log(`新しいメッセージ (${roomId}): ${newMessage.user} - ${newMessage.content}`);
+    console.log(`メッセージ送信完了: ルーム ${roomId}, ID ${newMessage.id}`);
   });
 
   // ユーザーの入力状態を管理
   socket.on("typing:start", (data) => {
     const { roomId, user } = data;
-    socket.to(roomId).emit("typing:user", { room: roomId, user, isTyping: true });
+    socket.to(roomId).emit("typing:user", { 
+      room: roomId, 
+      user, 
+      isTyping: true 
+    });
   });
 
   socket.on("typing:stop", (data) => {
     const { roomId, user } = data;
-    socket.to(roomId).emit("typing:user", { room: roomId, user, isTyping: false });
+    socket.to(roomId).emit("typing:user", { 
+      room: roomId, 
+      user, 
+      isTyping: false 
+    });
   });
 
   // 切断時の処理
   socket.on("disconnect", () => {
+    console.log(`ユーザー ${socket.id} が切断されました`);
+    
     // 参加していたすべてのルームから退出
     const rooms = Array.from(socket.rooms);
     rooms.forEach(room => {
       if (room !== socket.id && roomUsers[room] !== undefined) {
-        roomUsers[room]--;
-        socket.to(room).emit("users:count", { room, count: roomUsers[room] });
+        roomUsers[room] = Math.max(0, roomUsers[room] - 1); // 負の数にならないように
+        io.to(room).emit("users:count", { 
+          room, 
+          count: roomUsers[room] 
+        });
+        console.log(`ルーム ${room} のユーザー数を更新: ${roomUsers[room]} 人`);
       }
     });
-    
-    console.log(`ユーザーが切断しました。ID: ${socket.id}`);
   });
 });
 
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
   console.log(`サーバーがポート${PORT}で起動しました`);
+  console.log('利用可能なルーム:', availableRooms.map(r => r.name).join(', '));
 });
