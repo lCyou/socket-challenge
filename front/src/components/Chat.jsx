@@ -25,7 +25,7 @@ const Chat = () => {
     scrollToBottom();
   }, [messages]);
 
-  // WebSocket接続の初期化
+  // WebSocket接続の初期化（currentRoomへの依存を削除）
   useEffect(() => {
     const newSocket = io('http://localhost:3000', {
       transports: ['websocket']
@@ -52,22 +52,21 @@ const Chat = () => {
     // 初期メッセージの受信
     newSocket.on('messages:initial', (data) => {
       const { room, messages: initialMessages } = data;
-      if (room === currentRoom) {
-        setMessages(initialMessages);
-      }
+      console.log(`初期メッセージを受信: ルーム ${room}`, initialMessages);
+      setMessages(initialMessages);
     });
 
     // 新しいメッセージの受信
     newSocket.on('message:new', (data) => {
       const { room, message } = data;
-      if (room === currentRoom) {
-        setMessages(prev => [...prev, message]);
-      }
+      console.log(`新しいメッセージを受信: ルーム ${room}`, message);
+      setMessages(prev => [...prev, message]);
     });
 
     // 接続ユーザー数の更新
     newSocket.on('users:count', (data) => {
       const { room, count } = data;
+      console.log(`ユーザー数更新: ルーム ${room} - ${count}人`);
       setRoomUsers(prev => ({
         ...prev,
         [room]: count
@@ -77,31 +76,31 @@ const Chat = () => {
     // タイピング状態の管理
     newSocket.on('typing:user', (data) => {
       const { room, user, isTyping } = data;
-      if (room === currentRoom) {
-        setTypingUsers(prev => {
-          const newSet = new Set(prev);
-          if (isTyping) {
-            newSet.add(user);
-          } else {
-            newSet.delete(user);
-          }
-          return newSet;
-        });
-      }
+      setTypingUsers(prev => {
+        const newSet = new Set(prev);
+        if (isTyping) {
+          newSet.add(user);
+        } else {
+          newSet.delete(user);
+        }
+        console.log(room+'で'+user+'が'+isTyping?'入力中':'入力停止');
+        return newSet;
+      });
     });
 
     // クリーンアップ
     return () => {
       newSocket.close();
     };
-  }, [currentRoom]);
+  }, []); // 依存配列を空にする
 
   // ルーム変更時の処理
   const joinRoom = (roomId) => {
     if (socket && roomId) {
+      console.log(`ルーム ${roomId} に参加します`);
       setCurrentRoom(roomId);
-      setMessages([]);
-      setTypingUsers(new Set());
+      setMessages([]); // メッセージをクリア
+      setTypingUsers(new Set()); // タイピング状態をクリア
       socket.emit('room:join', roomId);
     }
   };
@@ -174,6 +173,14 @@ const Chat = () => {
     return availableRooms.find(room => room.id === currentRoom);
   };
 
+  // ルームから退出してルーム選択画面に戻る
+  const leaveRoom = () => {
+    handleStopTyping();
+    setCurrentRoom(null);
+    setMessages([]);
+    setTypingUsers(new Set());
+  };
+
   return (
     <div className="chat-container">
       <div className="chat-header">
@@ -231,7 +238,7 @@ const Chat = () => {
               <span>現在のルーム: <strong>{getCurrentRoomInfo()?.name}</strong></span>
               <button 
                 className="leave-room-btn" 
-                onClick={() => setCurrentRoom(null)}
+                onClick={leaveRoom}
               >
                 ルーム変更
               </button>

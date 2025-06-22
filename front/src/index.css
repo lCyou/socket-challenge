@@ -81,7 +81,6 @@ button:focus-visible {
   gap: 10px;
   padding: 20px;
   min-width: 175px;
-  min-height: 200px;
   background-color: rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 10px;

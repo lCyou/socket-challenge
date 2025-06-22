@@ -17,6 +17,7 @@ export function Column({children, id}) {
         {id}
     </div>
     <div className="Column" ref={ref} style={style}>
+      <p>drop here</p>
       {children}
     </div>
     </>

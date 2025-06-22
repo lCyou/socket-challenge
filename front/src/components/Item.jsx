@@ -1,5 +1,7 @@
 import React from "react";
+
 import { useSortable } from "@dnd-kit/react/sortable";
+// import { useDraggable } from "@dnd-kit/react";
 
 export function Item({ id, index, column, children }) {
   const { ref, isDragging } = useSortable({
