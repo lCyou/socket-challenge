@@ -1,24 +1,38 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { DragDropProvider } from "@dnd-kit/react";
+import { DragStartEvent, DragEndEvent } from "@dnd-kit/core"; // ここを変更
 import { move } from "@dnd-kit/helpers";
-import { Column } from "../components/Column";
-import { Item } from "../components/Item";
-import "../index.css";
-import DropArea from "../components/Droppable";
+// import { Column } from "../components/Column.tsx"; // 削除
+import { Item } from "../components/Item.tsx";
+import DropArea from "../components/Droppable.tsx";
+
+import { Container, Box, Typography } from '@mui/material';
+
+interface ItemData {
+  id: number;
+  name: string;
+}
+
+interface ColumnData {
+  [columnId: string]: ItemData[];
+}
 
 export default function DndContainer() {
     return (
-        <div className="DndContainer">
-            <h1>Drag and Drop Example</h1>
-            <p>This is a simple drag and drop example using React DnD.</p>
+        <Container>
+            <Typography variant="h4" component="h1" gutterBottom>
+                Drag and Drop Example
+            </Typography>
+            <Typography variant="body1" paragraph>
+                This is a simple drag and drop example using React DnD.
+            </Typography>
             <DnD />
-            <></>
-        </div>
+        </Container>
     );
 }
 
-const DnD = () => {
-      const [items, setItems] = useState({
+const DnD: React.FC = () => {
+      const [items, setItems] = useState<ColumnData>({
         hoge: [
           { id: 1, name: "alice" },
           { id: 2, name: "bob" },
@@ -74,43 +88,39 @@ const DnD = () => {
       });
 
     return (
-        <div className="DnD">
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
             <DragDropProvider
-                // onDragOver={(event) => {
-                //     // setItems((items) => move(items, event));
-                // }}
-                onDragStart={(event) => {
+                onDragStart={(event: DragStartEvent) => {
                     const { operation } = event;
                     console.log(
                         operation.source,
                         operation.target,
                     );
                 }}
-                onDragEnd={(event ) => {
+                onDragEnd={(event: DragEndEvent) => {
                     const { operation, canceled } = event;
                     console.log(
                         operation.source,
                         operation.target,
                         canceled ? "canceled" : "completed"
                     );
-                    setItems((items) => move(items, event));
+                    setItems((prevItems) => move(prevItems, event));
                 }}
             >
-                <div className="Root">
-                    {Object.entries(items).map(([column, items]) => {
-                        // console.log("column", column, items);
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
+                    {Object.entries(items).map(([column, itemList]) => {
                         return (
-                            <DropArea key={column.id} id={column}>
-                                {items.map((item, index) => (
-                                    <Item key={item.id} id={item.name} index={index} column={column}>
+                            <DropArea key={column} id={column}>
+                                {itemList.map((item, index) => (
+                                    <Item key={item.id} id={item.id.toString()} index={index} column={column}>
                                         {item.name}
                                     </Item>
                                 ))}
                             </DropArea>
                         )
                     })}
-                </div>
+                </Box>
             </DragDropProvider>
-        </div>
+        </Box>
     );
 }

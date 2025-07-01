@@ -5,16 +5,26 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "pnpm exec tsc",
+    "start": "node dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.9.0",
+  
   "dependencies": {
     "cors": "^2.8.5",
+    "crypt": "^0.0.2",
     "express": "^5.1.0",
     "json-server": "1.0.0-beta.3",
+    "pnpm": "^10.12.4",
     "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.0.8",
+    "typescript": "^5.8.3"
   }
 }

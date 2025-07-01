@@ -1,7 +1,3 @@
-import React from 'react';
-import Chat from './components/Chat';
-// import './components/Chat.css';
-
 const About = () => {
   return (
     <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
@@ -75,8 +71,6 @@ const About = () => {
           </ol>
         </div>
       </div>
-
-      <Chat />
     </div>
   );
 };
