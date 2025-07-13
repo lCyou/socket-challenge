@@ -24,19 +24,21 @@ export default function HomePage() {
   }, [navigate]);
 
   const handleCreateRoom = () => {
-    if (roomName.trim() && userName.trim()) {
-      socket.emit('room:create', { roomName, userName, userId }); 
+    const trimmedRoomName = roomName.trim();
+    const trimmedUserName = userName.trim();
+    if (trimmedRoomName && trimmedUserName) {
+      socket.emit('room:create', { roomName: trimmedRoomName, userName: trimmedUserName, userId }); 
     }
   };
 
   return (
     <Container maxWidth="sm" sx={{ mt: 4, textAlign: 'center' }}>
       <Box sx={{ my: 4 }}>
-        <img src="../assets/highmi_touka.png" alt="Highmi Touka" style={{ maxWidth: '100%', height: 'auto', marginBottom: '20px' }} />
+        <img src={highmiTouka} alt="Highmi Touka" style={{ maxWidth: '100%', height: 'auto', marginBottom: '20px' }} />
         <Typography variant="h4" component="h1" gutterBottom>
           ゲームへようこそ！
         </Typography>
-        <Typography variant="body1" >
+        <Typography variant="body1" paragraph>
           ルームを作成して、友達を招待しよう。
         </Typography>
       </Box>
@@ -59,7 +61,6 @@ export default function HomePage() {
           fullWidth
           margin="normal"
         />
-
         <Button
           variant="contained"
           color="primary"
